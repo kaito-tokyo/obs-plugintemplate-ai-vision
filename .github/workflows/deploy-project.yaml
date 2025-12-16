@@ -115,7 +115,7 @@ jobs:
             --package-path "release"
           )
 
-          if [ -n "$MACOS_SIGNING_INSTALLER_IDENTITY" ]; then
+          if [[ -n $MACOS_SIGNING_INSTALLER_IDENTITY ]]; then
             PRODUCTBUILD_ARGS+=(--sign "$MACOS_SIGNING_INSTALLER_IDENTITY")
           fi
 
