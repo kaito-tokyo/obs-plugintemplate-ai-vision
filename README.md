@@ -4,56 +4,122 @@
 
 The plugin template is meant to be used as a starting point for OBS Studio plugin development. It includes:
 
-* Boilerplate plugin source code
-* A CMake project file
-* GitHub Actions workflows and repository actions
+- Boilerplate plugin source code
+- A CMake project file
+- GitHub Actions workflows and repository actions
 
 ## Supported Build Environments
 
-| Platform  | Tool   |
-|-----------|--------|
-| Windows   | Visual Studio 17 2022 |
-| macOS     | XCode 16.0 |
-| Windows, macOS  | CMake 3.30.5 |
-| Ubuntu 24.04 | CMake 3.28.3 |
-| Ubuntu 24.04 | `ninja-build` |
-| Ubuntu 24.04 | `pkg-config`
-| Ubuntu 24.04 | `build-essential` |
+| Platform | Environment           |
+| -------- | --------------------- |
+| Windows  | Visual Studio 17 2022 |
+| macOS    | Xcode 16              |
+| Ubuntu   | Ubuntu 24.04          |
 
 ## Quick Start
 
-An absolute bare-bones [Quick Start Guide](https://github.com/obsproject/obs-plugintemplate/wiki/Quick-Start-Guide) is available in the wiki.
+This project utilizes **CMake Presets** to simplify the configuration and build process.
+
+### 1. Prerequisites
+
+Ensure the following tools are installed on your system:
+
+- **CMake** (3.28 or newer)
+- **C++ Compiler** (Visual Studio 2022, Xcode 16, or GCC/Clang)
+
+### 2. Build Instructions
+
+Execute the following commands in your terminal to install dependencies, build the plugin, and install the artifacts.
+
+#### Step 1: Install Dependencies
+
+**Windows and macOS:**
+Run the helper script to download OBS Studio headers, Qt6, and other pre-built dependencies automatically.
+
+```bash
+cmake -P scripts/download-deps.cmake
+```
+
+**Ubuntu:**
+Install the required packages via `apt`.
+
+```bash
+sudo add-apt-repository ppa:obsproject/obs-studio
+sudo apt-get update
+sudo apt-get install \
+  cmake \
+  libgles2-mesa-dev \
+  libqt6svg6-dev \
+  libsimde-dev \
+  ninja-build \
+  obs-studio \
+  pkg-config \
+  qt6-base-dev \
+  qt6-base-private-dev
+```
+
+#### Step 2: Configure, Build, and Install
+
+Select the appropriate preset for your platform.
+
+**Windows (PowerShell):**
+Installs artifacts to a local `release` directory.
+To use the plugin, copy the contents of the `release` directory to your OBS Studio installation path (typically `C:\Program Files\obs-studio`).
+
+```powershell
+# Configure
+cmake --preset windows-x64
+
+# Build
+cmake --build --preset windows-x64
+
+# Install (to a local 'release' folder)
+cmake --install build_x64 --prefix release
+```
+
+**macOS:**
+Installs directly to the OBS Studio plugins folder, allowing immediate use.
+
+```bash
+# Configure
+cmake --preset macos
+
+# Build
+cmake --build --preset macos
+
+# Install (to OBS Studio plugins folder)
+cmake --install build_macos --prefix "$HOME/Library/Application Support/obs-studio/plugins"
+```
+
+**Ubuntu:**
+Installs to the system directory (`/usr`).
+
+```bash
+# Configure
+cmake --preset ubuntu-x86_64
+
+# Build
+cmake --build --preset ubuntu-x86_64
+
+# Install (to /usr)
+sudo cmake --install build_x86_64 --prefix /usr
+```
+
+## Packaging and Release
+
+Packaging is handled automatically via GitHub Actions. The repository includes configured workflows for Continuous Integration and Continuous Delivery (CI/CD):
+
+- **Build**: Triggered on push to `main` and `master` and Pull Requests.
+- **Release**: Triggered when a tag is pushed (e.g., `1.0.0`). This workflow builds, signs, and creates a Draft Release with artifacts.
+
+## macOS Code Signing and Notarization
+
+For information regarding macOS code signing and notarization setup (required for distribution), please refer to [Codesigning on macOS](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS).
 
 ## Documentation
 
-All documentation can be found in the [Plugin Template Wiki](https://github.com/obsproject/obs-plugintemplate/wiki).
+Comprehensive documentation is available in the [Plugin Template Wiki](https://github.com/obsproject/obs-plugintemplate/wiki).
 
-Suggested reading to get up and running:
-
-* [Getting started](https://github.com/obsproject/obs-plugintemplate/wiki/Getting-Started)
-* [Build system requirements](https://github.com/obsproject/obs-plugintemplate/wiki/Build-System-Requirements)
-* [Build system options](https://github.com/obsproject/obs-plugintemplate/wiki/CMake-Build-System-Options)
-
-## GitHub Actions & CI
-
-Default GitHub Actions workflows are available for the following repository actions:
-
-* `push`: Run for commits or tags pushed to `master` or `main` branches.
-* `pr-pull`: Run when a Pull Request has been pushed or synchronized.
-* `dispatch`: Run when triggered by the workflow dispatch in GitHub's user interface.
-* `build-project`: Builds the actual project and is triggered by other workflows.
-* `check-format`: Checks CMake and plugin source code formatting and is triggered by other workflows.
-
-The workflows make use of GitHub repository actions (contained in `.github/actions`) and build scripts (contained in `.github/scripts`) which are not needed for local development, but might need to be adjusted if additional/different steps are required to build the plugin.
-
-### Retrieving build artifacts
-
-Successful builds on GitHub Actions will produce build artifacts that can be downloaded for testing. These artifacts are commonly simple archives and will not contain package installers or installation programs.
-
-### Building a Release
-
-To create a release, an appropriately named tag needs to be pushed to the `main`/`master` branch using semantic versioning (e.g., `12.3.4`, `23.4.5-beta2`). A draft release will be created on the associated repository with generated installer packages or installation programs attached as release artifacts.
-
-## Signing and Notarizing on macOS
-
-Basic concepts of codesigning and notarization on macOS are explained in the correspodning [Wiki article](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS) which has a specific section for the [GitHub Actions setup](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS#setting-up-code-signing-for-github-actions).
+- [Getting Started](https://github.com/obsproject/obs-plugintemplate/wiki/Getting-Started)
+- [Build System Requirements](https://github.com/obsproject/obs-plugintemplate/wiki/Build-System-Requirements)
+- [CMake Build System Options](https://github.com/obsproject/obs-plugintemplate/wiki/CMake-Build-System-Options)

@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": ["${workspaceFolder}/**"],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64",
+            "macFrameworkPath": [
+                "${workspaceFolder}/.deps/obs-deps-qt6-*-universal/lib"
+            ]
+        }
+    ],
+    "version": 4
+}

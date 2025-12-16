@@ -12,10 +12,20 @@
  * "LICENSE" in the distribution root.
  */
 
-#pragma once
+#include <obs-module.h>
 
-#define PLUGIN_NAME "plugintemplate-for-obs"
+#include "plugin-support.h"
 
-#ifndef PLUGIN_VERSION
-#define PLUGIN_VERSION "0.0.0"
-#endif
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+
+bool obs_module_load(void)
+{
+	blog(LOG_INFO, "[" PLUGIN_NAME "] plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	return true;
+}
+
+void obs_module_unload(void)
+{
+	blog(LOG_INFO, "[" PLUGIN_NAME "] plugin unloaded");
+}
