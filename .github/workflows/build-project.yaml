@@ -48,7 +48,7 @@ jobs:
         run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
 
       - name: Install dependencies from vcpkg
-        run: .github/scripts/install-vcpkg-macos.bash
+        run: ./scripts/install-vcpkg-macos.sh
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
