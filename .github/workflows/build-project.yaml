@@ -44,6 +44,12 @@ jobs:
       - name: Install dependencies via Homebrew
         run: brew install -q cmake xcbeautify
 
+      - name: Set up vcpkg
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        run: .github/scripts/install-vcpkg-macos.bash
+
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
         id: libobs-cache
@@ -123,6 +129,12 @@ jobs:
             qt6-base-dev \
             qt6-base-private-dev
 
+      - name: Set up vcpkg
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        run: $VCPKG_ROOT/vcpkg install --triplet x64-linux-obs
+
       - name: Configure
         run: cmake --preset ubuntu-x86_64
 
@@ -152,6 +164,13 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "ImageVersion=$ImageVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Set up vcpkg
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        shell: bash
+        run: $VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md-obs
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
