@@ -41,7 +41,7 @@ pushd "$WORK_DIR" > /dev/null
 echo "Fetching attestation bundle..." >&2
 rm -f ./*.jsonl
 curl -fsSL "https://readwrite.vcpkg-obs.kaito.tokyo/sigstore/curl" | curl -s -Z -K -
-cat *.jsonl > bundle.jsonl
+cat ./*.jsonl > bundle.jsonl
 
 echo "Analyzing status files..." >&2
 

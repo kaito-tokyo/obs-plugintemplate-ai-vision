@@ -9,7 +9,8 @@ set -euo pipefail
 #================================================================
 
 # Project root directory (parent directory of this script)
-readonly CMAKE_SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)
+readonly CMAKE_SOURCE_DIR
+CMAKE_SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)
 
 # vcpkg root directory (uses VCPKG_ROOT env var, falling back to VCPG_INSTALL_ROOT)
 readonly VCPKG_ROOT="${VCPKG_ROOT:-$VCPKG_INSTALLATION_ROOT}"
@@ -71,7 +72,7 @@ process_directory() {
   # Find all files in the subdirectory, using the arm64 directory as the reference
   find "${dir_arm64}" -type f | while read -r file_arm64; do
     # Get the relative path from the subdirectory base (e.g., "pkgconfig/libfoo.pc")
-    local relative_path="${file_arm64#${dir_arm64}/}"
+    local relative_path="${file_arm64#"${dir_arm64}/"}"
 
     # Construct the path for the x64 and universal files
     local file_x64="${dir_x64}/${relative_path}"

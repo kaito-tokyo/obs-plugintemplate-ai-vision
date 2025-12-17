@@ -21,7 +21,8 @@ try {
     $Spec = Get-Content $BuildSpecFile -Raw | ConvertFrom-Json
     $PluginName = $Spec.name
     $PluginVersion = $Spec.version
-} catch {
+}
+catch {
     Write-Error "Failed to parse buildspec.json: $_"
     exit 1
 }
@@ -85,10 +86,12 @@ try {
     Write-Host "  Binary: $MainZip"
     Write-Host "  Symbols: $PdbZip"
 
-} catch {
+}
+catch {
     Write-Error "Packaging failed: $_"
     exit 1
-} finally {
+}
+finally {
     # 6. Cleanup
     # Remove the temporary directory regardless of success or failure
     if (Test-Path $TempBase) {

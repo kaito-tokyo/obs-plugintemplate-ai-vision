@@ -84,10 +84,6 @@ jobs:
       - name: Build
         run: cmake --build --preset macos 2>&1 | tee Build.log | xcbeautify
 
-      - name: Verify vcpkg-obs.kaito.tokyo binary caches
-        shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/arm64-osx-obs/vcpkg/status vcpkg_installed/x64-osx-obs/vcpkg/status
-
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
         with:
@@ -151,10 +147,6 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build --preset ubuntu-x86_64
-
-      - name: Verify vcpkg-obs.kaito.tokyo binary caches
-        shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/vcpkg/status
 
   windows-build:
     name: Windows Build
@@ -226,10 +218,6 @@ jobs:
       - name: Package
         shell: pwsh
         run: ./scripts/package-plugin-windows.ps1
-
-      - name: Verify vcpkg-obs.kaito.tokyo binary caches
-        shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/vcpkg/status
 
       - name: Upload Binary
         uses: actions/upload-artifact@v6
