@@ -86,7 +86,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo-windows.sh
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
@@ -124,8 +124,7 @@ jobs:
           sudo apt-get remove --purge -y man-db
           sudo add-apt-repository -y ppa:obsproject/obs-studio
           sudo apt-get update
-          sudo apt-get install -y eatmydata
-          sudo eatmydata apt-get install -y --no-install-recommends \
+          sudo apt-get install -y --no-install-recommends \
             cmake \
             libgles2-mesa-dev \
             libqt6svg6-dev \
@@ -150,7 +149,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo-windows.sh
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh
 
   windows-build:
     name: Windows Build
@@ -220,7 +219,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo-windows.sh
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh
 
       - name: Upload Binary
         uses: actions/upload-artifact@v6
