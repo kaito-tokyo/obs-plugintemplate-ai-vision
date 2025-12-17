@@ -18,14 +18,15 @@ if (-not (Test-Path $BuildSpecFile)) {
 
 try {
     $Spec = Get-Content $BuildSpecFile -Raw | ConvertFrom-Json
-} catch {
+}
+catch {
     Write-Error "Failed to parse buildspec.json: $_"
     exit 1
 }
 
-$ObsVersion      = $Spec.dependencies."obs-studio".version
+$ObsVersion = $Spec.dependencies."obs-studio".version
 $PrebuiltVersion = $Spec.dependencies.prebuilt.version
-$Qt6Version      = $Spec.dependencies.qt6.version
+$Qt6Version = $Spec.dependencies.qt6.version
 
 Write-Host "Detected Versions from buildspec.json:"
 Write-Host "  OBS Studio: $ObsVersion"
@@ -33,9 +34,9 @@ Write-Host "  Prebuilt:   $PrebuiltVersion"
 Write-Host "  Qt6:        $Qt6Version"
 
 $PrebuiltDir = Join-Path $DepsDir "obs-deps-$PrebuiltVersion-x64"
-$Qt6Dir      = Join-Path $DepsDir "obs-deps-qt6-$Qt6Version-x64"
-$SourceDir   = Join-Path $DepsDir "obs-studio-$ObsVersion"
-$BuildDir    = Join-Path $SourceDir "build_x64"
+$Qt6Dir = Join-Path $DepsDir "obs-deps-qt6-$Qt6Version-x64"
+$SourceDir = Join-Path $DepsDir "obs-studio-$ObsVersion"
+$BuildDir = Join-Path $SourceDir "build_x64"
 
 if (-not (Test-Path $SourceDir)) {
     Write-Error "Error: OBS source directory not found at $SourceDir"

@@ -15,6 +15,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  VCPKG_BINARY_SOURCES: clear;http,https://vcpkg-obs.kaito.tokyo/{name}/{version}/{sha}
+
 jobs:
   macos-build:
     name: macOS Build
@@ -43,6 +46,12 @@ jobs:
 
       - name: Install dependencies via Homebrew
         run: brew install -q cmake xcbeautify
+
+      - name: Set up vcpkg
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        run: ./scripts/install-vcpkg-macos.sh
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
@@ -106,13 +115,13 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies on Ubuntu
+        shell: bash
         run: |
           echo "man-db man-db/auto-update boolean false" | sudo debconf-set-selections
           sudo apt-get remove --purge -y man-db
           sudo add-apt-repository -y ppa:obsproject/obs-studio
           sudo apt-get update
-          sudo apt-get install -y eatmydata
-          sudo eatmydata apt-get install -y --no-install-recommends \
+          sudo apt-get install -y --no-install-recommends \
             cmake \
             libgles2-mesa-dev \
             libqt6svg6-dev \
@@ -123,10 +132,20 @@ jobs:
             qt6-base-dev \
             qt6-base-private-dev
 
+      - name: Set up vcpkg
+        shell: bash
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        shell: bash
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-linux-obs'
+
       - name: Configure
+        shell: bash
         run: cmake --preset ubuntu-x86_64
 
       - name: Build
+        shell: bash
         run: cmake --build --preset ubuntu-x86_64
 
   windows-build:
@@ -153,6 +172,14 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "ImageVersion=$ImageVersion" >> "$GITHUB_OUTPUT"
 
+      - name: Set up vcpkg
+        shell: bash
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        shell: bash
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-windows-static-md-obs'
+
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
         id: libobs-cache
@@ -167,10 +194,12 @@ jobs:
 
       - name: Download dependencies without obs-studio
         if: steps.libobs-cache.outputs.cache-hit == 'true'
+        shell: bash
         run: cmake -DWITH_OBS_STUDIO=OFF -P scripts/download-deps.cmake
 
       - name: Download dependencies
         if: steps.libobs-cache.outputs.cache-hit != 'true'
+        shell: bash
         run: cmake -P scripts/download-deps.cmake
 
       - name: Build libobs
@@ -179,9 +208,11 @@ jobs:
         run: ./scripts/build-obs-studio-windows.ps1
 
       - name: Configure
+        shell: bash
         run: cmake --preset windows-x64
 
       - name: Build
+        shell: bash
         run: cmake --build --preset windows-x64
 
       - name: Package
