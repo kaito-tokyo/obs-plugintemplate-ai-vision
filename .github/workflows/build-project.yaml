@@ -89,7 +89,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/arm64-osx-obs/vcpkg/status vcpkg_installed/x64-osx-obs/vcpkg/status
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh "$HOME/.cache/vcpkg/archives" vcpkg_installed/arm64-osx-obs/vcpkg/status vcpkg_installed/x64-osx-obs/vcpkg/status
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
@@ -152,7 +152,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/x64-linux-obs/vcpkg/status
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh "$HOME/.cache/vcpkg/archives" vcpkg_installed/x64-linux-obs/vcpkg/status
 
   windows-build:
     name: Windows Build
@@ -185,7 +185,7 @@ jobs:
         shell: bash
         run: |
           $VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md-obs
-          tree vcpkg_installed
+          find vcpkg_installed
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
