@@ -7,7 +7,10 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' || github.ref != 'refs/heads/master' || github.ref != 'refs/heads/develop' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/develop' }}
+
+env:
+  VCPKG_BINARY_SOURCES: clear;http,https://vcpkg-obs.kaito.tokyo/{name}/{version}/{sha}
 
 jobs:
   macos-deploy:
@@ -56,6 +59,12 @@ jobs:
       - name: Install dependencies via Homebrew
         shell: bash
         run: brew install -q cmake xcbeautify
+
+      - name: Set up vcpkg
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        run: ./scripts/install-vcpkg-macos.sh
 
       - name: Download dependencies
         shell: bash
@@ -195,6 +204,9 @@ jobs:
     timeout-minutes: 30
     environment: production-ubuntu
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -228,6 +240,14 @@ jobs:
             pkg-config \
             qt6-base-dev \
             qt6-base-private-dev
+
+      - name: Set up vcpkg
+        shell: bash
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        shell: bash
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-linux-obs'
 
       - name: Configure
         shell: bash
@@ -286,6 +306,14 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "ImageVersion=$ImageVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Set up vcpkg
+        shell: bash
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+
+      - name: Install dependencies from vcpkg
+        shell: bash
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-windows-static-md-obs'
 
       - name: Download dependencies
         shell: bash

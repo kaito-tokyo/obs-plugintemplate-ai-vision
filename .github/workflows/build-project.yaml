@@ -9,11 +9,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' || github.ref != 'refs/heads/master' || github.ref != 'refs/heads/develop' }}
-
-defaults:
-  run:
-    shell: bash
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/develop' }}
 
 env:
   VCPKG_BINARY_SOURCES: clear;http,https://vcpkg-obs.kaito.tokyo/{name}/{version}/{sha}
@@ -23,10 +19,16 @@ jobs:
     name: macOS Build
 
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     permissions:
       contents: read
+
+    env:
+      HOMEBREW_NO_ANALYTICS: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_ENV_HINTS: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
 
     steps:
       - name: Checkout
@@ -103,7 +105,7 @@ jobs:
     name: Ubuntu Build
 
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     permissions:
       contents: read
@@ -152,8 +154,10 @@ jobs:
     name: Windows Build
 
     runs-on: windows-2022
+    timeout-minutes: 60
 
-    timeout-minutes: 30
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
