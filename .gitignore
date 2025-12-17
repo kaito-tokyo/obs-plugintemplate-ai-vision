@@ -4,3 +4,4 @@
 /build_*/
 /release/
 /vcpkg_installed/
+/sigstore*/
