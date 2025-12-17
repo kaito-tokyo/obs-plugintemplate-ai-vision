@@ -9,8 +9,8 @@ set -euo pipefail
 #================================================================
 
 # Project root directory (parent directory of this script)
-readonly CMAKE_SOURCE_DIR
 CMAKE_SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)
+readonly CMAKE_SOURCE_DIR
 
 # vcpkg root directory (uses VCPKG_ROOT env var, falling back to VCPG_INSTALL_ROOT)
 readonly VCPKG_ROOT="${VCPKG_ROOT:-$VCPKG_INSTALLATION_ROOT}"
