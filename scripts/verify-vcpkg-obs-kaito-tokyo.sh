@@ -54,7 +54,7 @@ verify_packages() {
     }
     if (pkg && arch && abi) print pkg, arch, abi
   }' | while read -r pkg arch abi; do
-    target_files=("$VCPKG_CACHE_DIR"/*/"$abi.zip")
+    target_files=("$VCPKG_ROOT/buildtrees/${pkg}_$abi.zip")
 
     if [[ ${#target_files[@]} -ne 1 ]] || [[ ! -f ${target_files[0]} ]] ; then
       echo "⚠️  Package file not found for: $pkg (ABI: $abi)"
