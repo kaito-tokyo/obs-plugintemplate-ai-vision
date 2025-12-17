@@ -11,6 +11,13 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
+# Determine null device path based on OS for curl config
+# Windows (Git Bash) needs "NUL", others use "/dev/null"
+case "$OSTYPE" in
+  msys*|cygwin*) NULL_PATH="NUL" ;;
+  *)             NULL_PATH="/dev/null" ;;
+esac
+
 # Convert status file paths to absolute paths
 STATUS_FILES=()
 for f in "$@"; do
@@ -41,7 +48,7 @@ echo "Analyzing status files..." >&2
 # --- Step 1: Extract candidates from status files ---
 {
   for status_file in "${STATUS_FILES[@]}"; do
-    echo "Processing: $status_file" >&2
+    echo "   Processing: $status_file" >&2
 
     tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
       pkg=""; ver=""; abi=""
@@ -69,10 +76,11 @@ fi
 # --- Step 2: Check existence via HEAD requests ---
 echo "Checking existence on server (HEAD requests)..." >&2
 
+# Use NULL_PATH determined at the start
 while read -r pkg ver abi; do
   url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
   printf 'url = "%s"\n' "$url"
-  printf 'output = /dev/null\n'
+  printf 'output = %s\n' "$NULL_PATH"
   printf 'write-out = "%%{http_code} %%{url_effective}\\n"\n'
 done < candidates.txt > curl_head_config.txt
 
@@ -103,26 +111,33 @@ else
   echo "No artifacts to download." >&2
 fi
 
-# --- Step 5: Verify ---
+# --- Step 5: Verify (Parallelized) ---
 echo "Verifying attestations..." >&2
-verified_count=0
-failed_count=0
+
+export REPO
+export BUNDLE="bundle.jsonl"
+
+# Prepare a temporary file to collect results
+> verification.log
 
 if [ -d "downloads" ]; then
-  shopt -s nullglob
-  for artifact in downloads/*; do
-    filename=$(basename "$artifact")
-
-    if gh attestation verify "$artifact" --repo "$REPO" --bundle "bundle.jsonl" >/dev/null 2>&1; then
-      echo "Verified: $filename" >&2
-      verified_count=$((verified_count + 1))
+  # Use find + xargs for parallel execution
+  find downloads -type f -print0 | xargs -0 -n 1 -P 10 -I {} bash -c '
+    filename=$(basename "$1")
+    if gh attestation verify "$1" --repo "$REPO" --bundle "$BUNDLE" >/dev/null 2>&1; then
+      echo "Verified: $filename"
     else
-      echo "FAILED: $filename" >&2
-      failed_count=$((failed_count + 1))
+      echo "FAILED: $filename"
     fi
-  done
-  shopt -u nullglob
+  ' _ {} >> verification.log
 fi
+
+verified_count=$(grep -c "^Verified:" verification.log || true)
+failed_count=$(grep -c "^FAILED:" verification.log || true)
+
+# Output detailed logs to stderr
+cat verification.log >&2
+rm -f verification.log
 
 popd > /dev/null
 
@@ -131,6 +146,7 @@ skipped_count=$((candidate_count - download_count))
 
 echo "----------------------------------------" >&2
 echo "Result: Success: $verified_count, Failed: $failed_count, Skipped: $skipped_count" >&2
+echo "Debug files are preserved in: ./$WORK_DIR" >&2
 
 if [[ $failed_count -gt 0 ]]; then
   exit 1
