@@ -1,4 +1,4 @@
-.deps/
 .vscode/
-build_*/
-vcpkg_installed/
+/.deps/
+/build_*/
+/vcpkg_installed/
