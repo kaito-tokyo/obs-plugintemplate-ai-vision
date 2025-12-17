@@ -224,7 +224,7 @@ jobs:
 
       - name: Verify vcpkg-obs.kaito,tokyo binary caches
         shell: bash
-        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/x64-windows-static-md-obs/vcpkg/status
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh "$(cygpath -u "$LOCALAPPDATA")/vcpkg/archives" vcpkg_installed/x64-windows-static-md-obs/vcpkg/status
 
       - name: Upload Binary
         uses: actions/upload-artifact@v6
