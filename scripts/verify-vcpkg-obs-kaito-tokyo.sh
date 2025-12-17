@@ -76,7 +76,6 @@ fi
 # --- Step 2: Check existence via HEAD requests ---
 echo "Checking existence on server (HEAD requests)..." >&2
 
-# Use NULL_PATH determined at the start
 while read -r pkg ver abi; do
   url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
   printf 'url = "%s"\n' "$url"
@@ -111,33 +110,26 @@ else
   echo "No artifacts to download." >&2
 fi
 
-# --- Step 5: Verify (Parallelized) ---
+# --- Step 5: Verify (Sequential) ---
 echo "Verifying attestations..." >&2
-
-export REPO
-export BUNDLE="bundle.jsonl"
-
-# Prepare a temporary file to collect results
-> verification.log
+verified_count=0
+failed_count=0
 
 if [ -d "downloads" ]; then
-  # Use find + xargs for parallel execution
-  find downloads -type f -print0 | xargs -0 -n 1 -P 10 -I {} bash -c '
-    filename=$(basename "$1")
-    if gh attestation verify "$1" --repo "$REPO" --bundle "$BUNDLE" >/dev/null 2>&1; then
-      echo "Verified: $filename"
+  shopt -s nullglob
+  for artifact in downloads/*; do
+    filename=$(basename "$artifact")
+
+    if gh attestation verify "$artifact" --repo "$REPO" --bundle "bundle.jsonl" >/dev/null 2>&1; then
+      echo "Verified: $filename" >&2
+      verified_count=$((verified_count + 1))
     else
-      echo "FAILED: $filename"
+      echo "FAILED: $filename" >&2
+      failed_count=$((failed_count + 1))
     fi
-  ' _ {} >> verification.log
+  done
+  shopt -u nullglob
 fi
-
-verified_count=$(grep -c "^Verified:" verification.log || true)
-failed_count=$(grep -c "^FAILED:" verification.log || true)
-
-# Output detailed logs to stderr
-cat verification.log >&2
-rm -f verification.log
 
 popd > /dev/null
 
