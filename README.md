@@ -17,6 +17,9 @@
 
 </div>
 
+> [!NOTE]
+> **This is an unofficial template** based on the [official OBS Plugin Template](https://github.com/obsproject/obs-plugintemplate). It has been customized for AI and computer vision plugin development but is not maintained or endorsed by the OBS Project.
+
 ## 🌟 Overview
 
 Welcome to the **OBS AI Vision Plugin Template** — your launchpad for creating next-generation streaming plugins powered by artificial intelligence! This template provides a robust foundation for developing computer vision and AI-enhanced features for OBS Studio, the world's leading open-source streaming and recording software.
