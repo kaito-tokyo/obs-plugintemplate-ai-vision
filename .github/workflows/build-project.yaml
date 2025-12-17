@@ -180,7 +180,9 @@ jobs:
 
       - name: Install dependencies from vcpkg
         shell: bash
-        run: $VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md-obs
+        run: |
+          $VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md-obs
+          tree vcpkg_installed
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
