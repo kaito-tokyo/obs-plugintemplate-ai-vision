@@ -59,51 +59,49 @@ mkdir -p downloads
 total_packages_found=0
 skipped_count=0
 
-# --- 修正箇所: ここから ---
-# ループ全体の標準出力(stdout)は curl_config.txt に書き込まれます。
-# したがって、ログメッセージは必ず >&2 (stderr) に逃がす必要があります。
+# --- 修正箇所: プロセス置換の使用 ---
+# 全体の出力を curl_config.txt に書き出すブロックを開始
+{
+  for status_file in "${STATUS_FILES[@]}"; do
+    echo "   Processing: $status_file" >&2
 
-for status_file in "${STATUS_FILES[@]}"; do
-  echo "   Processing: $status_file" >&2
+    # パイプ '|' ではなく '< <(...)' を使うことで、変数のスコープを維持する
+    while read -r pkg ver abi; do
 
-  tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
-    pkg=""; ver=""; abi=""
-    for(i=1; i<=NF; i++) {
-      if ($i ~ /^Package:/) { split($i, a, ":"); pkg = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", pkg); }
-      if ($i ~ /^Version:/) { split($i, a, ":"); ver = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", ver); }
-      if ($i ~ /^Abi:/)     { split($i, a, ":"); abi = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", abi); }
-    }
-    if (pkg != "" && ver != "" && abi != "") {
-      print pkg, ver, abi
-    }
-  }' | while read -r pkg ver abi; do
+      total_packages_found=$((total_packages_found + 1))
 
-    # set -e 対策のため算術式展開を変更
-    total_packages_found=$((total_packages_found + 1))
-
-    if has_subject "$abi"; then
-      # 【重要】ここだけが標準出力(stdout)に出る = ファイルに書き込まれる
-      url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
-      printf 'url = "%s"\n' "$url"
-      printf 'output = "downloads/%s"\n' "$abi"
-    else
-      # ログなので標準エラー出力(stderr)へ
-      echo "   [SKIP]  $pkg ($abi)" >&2
-      skipped_count=$((skipped_count + 1))
-    fi
+      if has_subject "$abi"; then
+        url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
+        # stdoutに出力 (curl_config.txt行き)
+        printf 'url = "%s"\n' "$url"
+        printf 'output = "downloads/%s"\n' "$abi"
+      else
+        echo "   [SKIP]  $pkg ($abi)" >&2
+        skipped_count=$((skipped_count + 1))
+      fi
+    done < <(
+      # 入力データを生成するコマンド群
+      tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
+        pkg=""; ver=""; abi=""
+        for(i=1; i<=NF; i++) {
+          if ($i ~ /^Package:/) { split($i, a, ":"); pkg = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", pkg); }
+          if ($i ~ /^Version:/) { split($i, a, ":"); ver = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", ver); }
+          if ($i ~ /^Abi:/)     { split($i, a, ":"); abi = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", abi); }
+        }
+        if (pkg != "" && ver != "" && abi != "") {
+          print pkg, ver, abi
+        }
+      }'
+    )
   done
-done > curl_config.txt
-
-# --- 修正箇所: ここまで ---
+} > curl_config.txt
+# --- 修正ここまで ---
 
 echo "📊 Analysis Result: Found $total_packages_found packages in status file." >&2
 echo "                    Skipped $skipped_count packages (ABI mismatch)." >&2
 
 echo "⬇️  Downloading artifacts..." >&2
 if [ -s curl_config.txt ]; then
-  # curlの設定ファイルが正しく作られているかデバッグしたい場合は以下のコメントを解除
-  # head -n 5 curl_config.txt >&2
-
   curl -f -s -Z -K curl_config.txt
 else
   echo "⚠️  No artifacts to download." >&2
