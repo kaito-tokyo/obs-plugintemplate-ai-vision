@@ -16,7 +16,7 @@ defaults:
     shell: bash
 
 env:
-  VCPKG_BINARY_SOURCES: http,https://vcpkg-obs.kaito.tokyo/{name}/{version}/{sha}
+  VCPKG_BINARY_SOURCES: clear;http,https://vcpkg-obs.kaito.tokyo/{name}/{version}/{sha}:file,write
 
 jobs:
   macos-build:
