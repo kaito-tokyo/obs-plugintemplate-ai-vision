@@ -16,9 +16,9 @@ STATUS_FILES=()
 for f in "$@"; do
   if [[ -f "$f" ]]; then
     if command -v realpath >/dev/null 2>&1; then
-        STATUS_FILES+=("$(realpath "$f")")
+      STATUS_FILES+=("$(realpath "$f")")
     else
-        STATUS_FILES+=("$(cd "$(dirname "$f")" && pwd)/$(basename "$f")")
+      STATUS_FILES+=("$(cd "$(dirname "$f")" && pwd)/$(basename "$f")")
     fi
   else
     echo "Error: Status file not found: $f" >&2
@@ -29,19 +29,19 @@ done
 # Create workspace
 WORK_DIR="sigstore-$ID"
 mkdir -p "$WORK_DIR"
-pushd "$WORK_DIR" > /dev/null
+pushd "$WORK_DIR" >/dev/null
 
 echo "📥 Fetching attestation bundle..."
 rm -f ./*.jsonl
 curl -fsSL "https://readwrite.vcpkg-obs.kaito.tokyo/sigstore/curl" | curl -s -Z -K -
-cat *.jsonl > bundle.jsonl
+cat *.jsonl >bundle.jsonl
 
 echo "📂 Loading subjects..."
 subjects=()
 if [ -s "bundle.jsonl" ]; then
-    while IFS= read -r line; do
-      subjects+=("$line")
-    done < <(jq -r '.dsseEnvelope.payload | @base64d | fromjson | .subject[].name' "bundle.jsonl")
+  while IFS= read -r line; do
+    subjects+=("$line")
+  done < <(jq -r '.dsseEnvelope.payload | @base64d | fromjson | .subject[].name' "bundle.jsonl")
 fi
 echo "✅ Loaded ${#subjects[@]} subjects."
 
@@ -65,7 +65,7 @@ for status_file in "${STATUS_FILES[@]}"; do
 
   # Parse status file
   # Added debug logic to output raw ABI for inspection
-  tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
+  tr -d '\r' <"$status_file" | awk -v RS="" -F"\n" '{
     pkg=""; ver=""; abi=""
     for(i=1; i<=NF; i++) {
       if ($i ~ /^Package:/) { split($i, a, ":"); pkg = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", pkg); }
@@ -92,16 +92,16 @@ for status_file in "${STATUS_FILES[@]}"; do
       skipped_count=$((skipped_count + 1))
     fi
   done
-done > curl_config.txt
+done >curl_config.txt
 
 echo "📊 Analysis Result: Found $total_packages_found packages in status file."
 echo "                    Skipped $skipped_count packages (ABI mismatch)."
 
 echo "⬇️  Downloading artifacts..."
 if [ -s curl_config.txt ]; then
-    curl -f -s -Z -K curl_config.txt
+  curl -f -s -Z -K curl_config.txt
 else
-    echo "⚠️  No artifacts to download."
+  echo "⚠️  No artifacts to download."
 fi
 
 echo "🔐 Verifying attestations..."
@@ -109,27 +109,27 @@ verified_count=0
 failed_count=0
 
 if [ -d "downloads" ]; then
-    shopt -s nullglob
-    for artifact in downloads/*; do
-        filename=$(basename "$artifact")
+  shopt -s nullglob
+  for artifact in downloads/*; do
+    filename=$(basename "$artifact")
 
-        if gh attestation verify "$artifact" --repo "$REPO" --bundle "bundle.jsonl" >/dev/null 2>&1; then
-            echo "✅ Verified: $filename"
-            verified_count=$((verified_count + 1))
-        else
-            echo "❌ FAILED: $filename"
-            failed_count=$((failed_count + 1))
-        fi
-    done
-    shopt -u nullglob
+    if gh attestation verify "$artifact" --repo "$REPO" --bundle "bundle.jsonl" >/dev/null 2>&1; then
+      echo "✅ Verified: $filename"
+      verified_count=$((verified_count + 1))
+    else
+      echo "❌ FAILED: $filename"
+      failed_count=$((failed_count + 1))
+    fi
+  done
+  shopt -u nullglob
 fi
 
-popd > /dev/null
+popd >/dev/null
 
 echo "----------------------------------------"
 echo "🎉 Result: Success: $verified_count, Failed: $failed_count"
 echo "📝 Debug files are preserved in: ./$WORK_DIR"
 
 if [[ $failed_count -gt 0 ]]; then
-    exit 1
+  exit 1
 fi
