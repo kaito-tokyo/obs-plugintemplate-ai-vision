@@ -51,9 +51,7 @@ jobs:
         run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
 
       - name: Install dependencies from vcpkg
-        run: |
-          ./scripts/install-vcpkg-macos.sh
-          ls
+        run: ./scripts/install-vcpkg-macos.sh
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
@@ -144,7 +142,7 @@ jobs:
 
       - name: Install dependencies from vcpkg
         shell: bash
-        run: $VCPKG_ROOT/vcpkg install --triplet x64-linux-obs
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-linux-obs'
 
       - name: Configure
         shell: bash
@@ -188,7 +186,7 @@ jobs:
 
       - name: Install dependencies from vcpkg
         shell: bash
-        run: $VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md-obs
+        run: '"$VCPKG_ROOT/vcpkg" install --triplet x64-windows-static-md-obs'
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
