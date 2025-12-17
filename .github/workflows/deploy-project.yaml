@@ -365,6 +365,15 @@ jobs:
         with:
           name: ${{ fromJson(steps.metadata.outputs.buildspec).name }}-binary-windows-x64-${{ github.run_number }}-pdb
 
+      - name: Attest build artifacts
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            ${{ fromJson(steps.metadata.outputs.buildspec).name }}-*.ddeb \
+            ${{ fromJson(steps.metadata.outputs.buildspec).name }}-*.deb \
+            ${{ fromJson(steps.metadata.outputs.buildspec).name }}-*.pkg \
+            ${{ fromJson(steps.metadata.outputs.buildspec).name }}-*.zip \
+
       - name: Create Draft Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
