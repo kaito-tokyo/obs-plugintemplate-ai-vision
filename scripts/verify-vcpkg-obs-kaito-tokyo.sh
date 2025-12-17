@@ -30,7 +30,7 @@ cat "sigstore-$ID"/*.jsonl > "$SIGSTORE_FILE"
 echo "Loading subjects..."
 subjects=()
 while IFS= read -r line; do
-    subjects+=("$line")
+  subjects+=("$line")
 done < <(jq -r '.dsseEnvelope.payload | @base64d | fromjson | .subject[].name' "$SIGSTORE_FILE")
 
 echo "Loaded ${#subjects[@]} subjects from attestation bundle."
@@ -39,8 +39,8 @@ verify_packages() {
   local status_file="$1"
 
   if [[ ! -f "$status_file" ]]; then
-      echo "⚠️  Status file not found: $status_file"
-      return
+    echo "⚠️  Status file not found: $status_file"
+    return
   fi
 
   echo "Processing status file: $status_file"
@@ -57,7 +57,8 @@ verify_packages() {
     target_files=("$VCPKG_CACHE_DIR"/*/"$abi.zip")
 
     if [[ ${#target_files[@]} -ne 1 ]] || [[ ! -f ${target_files[0]} ]] ; then
-      continue
+      echo "⚠️  Package file not found for: $pkg (ABI: $abi)"
+      exit 1
     fi
 
     local zip_file="${target_files[0]}"
