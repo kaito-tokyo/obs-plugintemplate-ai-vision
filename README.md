@@ -11,7 +11,7 @@
 
 **A cutting-edge template for building AI-powered vision plugins for OBS Studio**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
 
 ---
 
