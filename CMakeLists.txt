@@ -6,6 +6,7 @@ include(init)
 project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES C CXX)
 
 option(BUILD_TESTING "Build test cases" ON)
+option(USE_PKGCONFIG "Use pkg-config to find dependencies" OFF)
 
 if(MSVC)
   list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows")
@@ -59,10 +60,29 @@ find_package(libobs REQUIRED)
 find_package(obs-frontend-api REQUIRED)
 find_package(Qt6 COMPONENTS Widgets Core REQUIRED)
 
+if(VCPKG_TARGET_TRIPLET)
+  list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+
+  find_package(ncnn CONFIG REQUIRED)
+  add_library(ncnn::ncnn ALIAS ncnn)
+elseif(USE_PKGCONFIG)
+  find_package(PkgConfig REQUIRED)
+
+  # --- ncnn ---
+  pkg_check_modules(PC_NCNN REQUIRED ncnn)
+  add_library(ncnn::ncnn INTERFACE IMPORTED)
+  target_link_libraries(ncnn::ncnn INTERFACE ${PC_NCNN_LIBRARIES})
+  target_include_directories(ncnn::ncnn INTERFACE ${PC_NCNN_INCLUDE_DIRS})
+  target_compile_definitions(ncnn::ncnn INTERFACE ${PC_NCNN_CFLAGS_OTHER} PREFIXED_NCNN_HEADERS)
+  target_link_directories(ncnn::ncnn INTERFACE ${PC_NCNN_LIBRARY_DIRS})
+else()
+  message(FATAL_ERROR "Either USE_PKGCONFIG or VCPKG_TARGET_TRIPLET must be set.")
+endif()
+
 set(PLUGIN_SOURCES src/plugin-main.cpp)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE ${PLUGIN_SOURCES})
-target_link_libraries(${CMAKE_PROJECT_NAME} OBS::libobs OBS::obs-frontend-api Qt6::Widgets Qt6::Core)
+target_link_libraries(${CMAKE_PROJECT_NAME} OBS::libobs OBS::obs-frontend-api Qt6::Widgets Qt6::Core ncnn::ncnn)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "PLUGIN_VERSION=\"${PLUGIN_VERSION}\"")
 
 if(MSVC)

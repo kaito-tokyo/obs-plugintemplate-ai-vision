@@ -33,11 +33,11 @@
   },
   "platformConfig": {
     "macos": {
-      "bundleId": "com.github.kaito-tokyo.plugintemplate-for-obs"
+      "bundleId": "com.github.kaito-tokyo.plugintemplate-for-obs-ai-vision"
     }
   },
-  "name": "plugintemplate-for-obs",
-  "displayName": "Plugin Template for OBS",
+  "name": "plugintemplate-for-obs-ai-vision",
+  "displayName": "Plugin Template for OBS AI Vision",
   "version": "0.1.0",
   "author": "Your Name Here",
   "website": "https://example.com",
