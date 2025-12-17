@@ -31,17 +31,17 @@ WORK_DIR="sigstore-$ID"
 mkdir -p "$WORK_DIR"
 pushd "$WORK_DIR" > /dev/null
 
-echo "📥 Fetching attestation bundle..." >&2
+echo "Fetching attestation bundle..." >&2
 rm -f ./*.jsonl
 curl -fsSL "https://readwrite.vcpkg-obs.kaito.tokyo/sigstore/curl" | curl -s -Z -K -
 cat *.jsonl > bundle.jsonl
 
-echo "🔍 Analyzing status files..." >&2
+echo "Analyzing status files..." >&2
 
 # --- Step 1: Extract candidates from status files ---
 {
   for status_file in "${STATUS_FILES[@]}"; do
-    echo "   Processing: $status_file" >&2
+    echo "Processing: $status_file" >&2
 
     tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
       pkg=""; ver=""; abi=""
@@ -58,16 +58,16 @@ echo "🔍 Analyzing status files..." >&2
 } > candidates.txt
 
 candidate_count=$(wc -l < candidates.txt | tr -d ' ')
-echo "📊 Found $candidate_count packages in status files." >&2
+echo "Found $candidate_count packages in status files." >&2
 
 if [[ "$candidate_count" -eq 0 ]]; then
-  echo "⚠️  No packages found to check." >&2
+  echo "No packages found to check." >&2
   popd > /dev/null
   exit 0
 fi
 
 # --- Step 2: Check existence via HEAD requests ---
-echo "📡 Checking existence on server (HEAD requests)..." >&2
+echo "Checking existence on server (HEAD requests)..." >&2
 
 while read -r pkg ver abi; do
   url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
@@ -79,7 +79,7 @@ done < candidates.txt > curl_head_config.txt
 curl -s -I -Z -K curl_head_config.txt > existence_results.txt
 
 # --- Step 3: Generate download config ---
-echo "📝 Generating download list..." >&2
+echo "Generating download list..." >&2
 
 awk '
 $1 == "200" {
@@ -92,19 +92,19 @@ $1 == "200" {
 }' existence_results.txt > curl_download_config.txt
 
 download_count=$(grep -c "^url =" curl_download_config.txt || true)
-echo "📊 $download_count packages exist on remote server." >&2
+echo "$download_count packages exist on remote server." >&2
 
 # --- Step 4: Download ---
 mkdir -p downloads
-echo "⬇️  Downloading artifacts..." >&2
+echo "Downloading artifacts..." >&2
 if [ -s curl_download_config.txt ]; then
   curl -f -s -Z -K curl_download_config.txt
 else
-  echo "⚠️  No artifacts to download." >&2
+  echo "No artifacts to download." >&2
 fi
 
 # --- Step 5: Verify ---
-echo "🔐 Verifying attestations..." >&2
+echo "Verifying attestations..." >&2
 verified_count=0
 failed_count=0
 
@@ -114,10 +114,10 @@ if [ -d "downloads" ]; then
     filename=$(basename "$artifact")
 
     if gh attestation verify "$artifact" --repo "$REPO" --bundle "bundle.jsonl" >/dev/null 2>&1; then
-      echo "✅ Verified: $filename" >&2
+      echo "Verified: $filename" >&2
       verified_count=$((verified_count + 1))
     else
-      echo "❌ FAILED: $filename" >&2
+      echo "FAILED: $filename" >&2
       failed_count=$((failed_count + 1))
     fi
   done
@@ -130,8 +130,7 @@ popd > /dev/null
 skipped_count=$((candidate_count - download_count))
 
 echo "----------------------------------------" >&2
-echo "🎉 Result: Success: $verified_count, Failed: $failed_count, Skipped: $skipped_count" >&2
-echo "📝 Debug files are preserved in: ./$WORK_DIR" >&2
+echo "Result: Success: $verified_count, Failed: $failed_count, Skipped: $skipped_count" >&2
 
 if [[ $failed_count -gt 0 ]]; then
   exit 1
