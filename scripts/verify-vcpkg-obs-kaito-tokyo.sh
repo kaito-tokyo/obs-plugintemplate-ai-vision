@@ -7,13 +7,11 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
-VCPKG_CACHE_DIR=${1:?}
-shift
-if [[ ! -d "$VCPKG_CACHE_DIR" ]]; then
-  echo "Error: Vcpkg cache directory does not exist: $VCPKG_CACHE_DIR" >&2
+if [[ ! -d "$VCPKG_ROOT" ]]; then
+  echo "Error: Vcpkg root does not exist: $VCPKG_ROOT" >&2
   exit 1
 fi
-echo "📂 Using cache dir: $VCPKG_CACHE_DIR"
+echo "📂 Using cache dir: $VCPKG_ROOT"
 
 ID="vcpkg-obs-kaito-tokyo"
 SIGSTORE_FILE="sigstore-${ID}.jsonl"
