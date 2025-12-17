@@ -67,6 +67,18 @@ jobs:
           ENABLE_XCBEAUTIFY: true
         run: scripts/build-obs-studio-macos.sh
 
+      - name: Save libobs cache
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        continue-on-error: true
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            .deps/Frameworks
+            .deps/include
+            .deps/lib
+            .deps/obs-studio-${{ fromJson(steps.metadata.outputs.buildspec).dependencies.obs-studio.version }}
+          key: ${{ runner.os }}-libobs-${{ hashFiles('buildspec.json') }}-${{ runner.arch }}-${{ steps.metadata.outputs.ImageVersion }}
+
       - name: Configure
         run: cmake --preset macos-ci
 
@@ -159,18 +171,6 @@ jobs:
           path: build_macos/RelWithDebInfo/${{ fromJson(steps.metadata.outputs.buildspec).name }}-*.dSYM.zip
           if-no-files-found: error
 
-      - name: Save libobs cache
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        continue-on-error: true
-        uses: actions/cache/save@v5
-        with:
-          path: |
-            .deps/Frameworks
-            .deps/include
-            .deps/lib
-            .deps/obs-studio-${{ fromJson(steps.metadata.outputs.buildspec).dependencies.obs-studio.version }}
-          key: ${{ runner.os }}-libobs-${{ hashFiles('buildspec.json') }}-${{ runner.arch }}-${{ steps.metadata.outputs.ImageVersion }}
-
       - name: Upload Raw Build Log
         continue-on-error: true
         if: always()
@@ -178,6 +178,10 @@ jobs:
         with:
           name: ${{ runner.os }}-deploy-rawlogs-${{ github.run_number }}
           path: "*.log"
+
+      - name: Verify vcpkg-obs.kaito.tokyo binary caches
+        shell: bash
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/arm64-osx-obs/vcpkg/status vcpkg_installed/x64-osx-obs/vcpkg/status
 
   ubuntu-deploy:
     name: Ubuntu Deploy
@@ -242,6 +246,10 @@ jobs:
           path: release/*.ddeb
           if-no-files-found: error
 
+      - name: Verify vcpkg-obs.kaito.tokyo binary caches
+        shell: bash
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/vcpkg/status
+
   windows-deploy:
     name: Windows Deploy
 
@@ -276,6 +284,19 @@ jobs:
         shell: pwsh
         run: ./scripts/build-obs-studio-windows.ps1
 
+      - name: Save libobs cache
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/cache/save@v5
+        id: libobs-cache
+        with:
+          path: |
+            .deps/bin
+            .deps/cmake
+            .deps/include
+            .deps/lib
+            .deps/obs-studio-${{ fromJson(steps.metadata.outputs.buildspec).dependencies.obs-studio.version }}
+          key: ${{ runner.os }}-libobs-${{ hashFiles('buildspec.json') }}-${{ runner.arch }}-${{ steps.metadata.outputs.ImageVersion }}
+
       - name: Configure
         run: cmake --preset windows-ci-x64
 
@@ -298,18 +319,9 @@ jobs:
           name: ${{ fromJson(steps.metadata.outputs.buildspec).name }}-binary-windows-x64-${{ github.run_number }}-pdb
           path: release/${{ fromJson(steps.metadata.outputs.buildspec).name }}-${{ fromJson(steps.metadata.outputs.buildspec).version }}-windows-x64-pdb.zip
 
-      - name: Save libobs cache
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        uses: actions/cache/save@v5
-        id: libobs-cache
-        with:
-          path: |
-            .deps/bin
-            .deps/cmake
-            .deps/include
-            .deps/lib
-            .deps/obs-studio-${{ fromJson(steps.metadata.outputs.buildspec).dependencies.obs-studio.version }}
-          key: ${{ runner.os }}-libobs-${{ hashFiles('buildspec.json') }}-${{ runner.arch }}-${{ steps.metadata.outputs.ImageVersion }}
+      - name: Verify vcpkg-obs.kaito.tokyo binary caches
+        shell: bash
+        run: ./scripts/verify-vcpkg-obs-kaito-tokyo.sh vcpkg_installed/vcpkg/status
 
   create-release:
     name: Create Release
