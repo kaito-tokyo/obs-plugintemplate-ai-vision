@@ -4,7 +4,7 @@
 
 ### *Supercharge Your Streaming with Artificial Intelligence*
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=for-the-badge)](https://github.com/kaito-tokyo/obs-plugintemplate-ai-vision)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/kaito-tokyo/obs-plugintemplate-ai-vision/build-project.yaml?style=for-the-badge&logo=github)](https://github.com/kaito-tokyo/obs-plugintemplate-ai-vision/actions/workflows/build-project.yaml)
 [![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
 [![OBS Studio](https://img.shields.io/badge/OBS-31.1.1-8A2BE2?style=for-the-badge&logo=obsstudio)](https://obsproject.com/)
 [![C++](https://img.shields.io/badge/C++-17-00599C?style=for-the-badge&logo=cplusplus)](https://isocpp.org/)
