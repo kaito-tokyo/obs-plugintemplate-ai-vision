@@ -36,77 +36,74 @@ rm -f ./*.jsonl
 curl -fsSL "https://readwrite.vcpkg-obs.kaito.tokyo/sigstore/curl" | curl -s -Z -K -
 cat *.jsonl > bundle.jsonl
 
-echo "📂 Loading subjects..." >&2
-subjects=()
-if [ -s "bundle.jsonl" ]; then
-  while IFS= read -r line; do
-    subjects+=("$line")
-  done < <(jq -r '.dsseEnvelope.payload | @base64d | fromjson | .subject[].name' "bundle.jsonl")
-fi
-echo "✅ Loaded ${#subjects[@]} subjects." >&2
-
-has_subject() {
-  local target="$1"
-  for s in "${subjects[@]}"; do
-    [[ "$s" == "$target" ]] && return 0
-  done
-  return 1
-}
-
 echo "🔍 Analyzing status files..." >&2
-mkdir -p downloads
 
-total_packages_found=0
-skipped_count=0
-
-# --- 修正箇所: プロセス置換の使用 ---
-# 全体の出力を curl_config.txt に書き出すブロックを開始
+# --- Step 1: Extract candidates from status files ---
 {
   for status_file in "${STATUS_FILES[@]}"; do
     echo "   Processing: $status_file" >&2
 
-    # パイプ '|' ではなく '< <(...)' を使うことで、変数のスコープを維持する
-    while read -r pkg ver abi; do
-
-      total_packages_found=$((total_packages_found + 1))
-
-      if has_subject "$abi"; then
-        url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
-        # stdoutに出力 (curl_config.txt行き)
-        printf 'url = "%s"\n' "$url"
-        printf 'output = "downloads/%s"\n' "$abi"
-      else
-        echo "   [SKIP]  $pkg ($abi)" >&2
-        skipped_count=$((skipped_count + 1))
-      fi
-    done < <(
-      # 入力データを生成するコマンド群
-      tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
-        pkg=""; ver=""; abi=""
-        for(i=1; i<=NF; i++) {
-          if ($i ~ /^Package:/) { split($i, a, ":"); pkg = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", pkg); }
-          if ($i ~ /^Version:/) { split($i, a, ":"); ver = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", ver); }
-          if ($i ~ /^Abi:/)     { split($i, a, ":"); abi = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", abi); }
-        }
-        if (pkg != "" && ver != "" && abi != "") {
-          print pkg, ver, abi
-        }
-      }'
-    )
+    tr -d '\r' < "$status_file" | awk -v RS="" -F"\n" '{
+      pkg=""; ver=""; abi=""
+      for(i=1; i<=NF; i++) {
+        if ($i ~ /^Package:/) { split($i, a, ":"); pkg = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", pkg); }
+        if ($i ~ /^Version:/) { split($i, a, ":"); ver = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", ver); }
+        if ($i ~ /^Abi:/)     { split($i, a, ":"); abi = a[2]; gsub(/^[ \t]+|[ \t]+$/, "", abi); }
+      }
+      if (pkg != "" && ver != "" && abi != "") {
+        print pkg, ver, abi
+      }
+    }'
   done
-} > curl_config.txt
-# --- 修正ここまで ---
+} > candidates.txt
 
-echo "📊 Analysis Result: Found $total_packages_found packages in status file." >&2
-echo "                    Skipped $skipped_count packages (ABI mismatch)." >&2
+candidate_count=$(wc -l < candidates.txt | tr -d ' ')
+echo "📊 Found $candidate_count packages in status files." >&2
 
+if [[ "$candidate_count" -eq 0 ]]; then
+  echo "⚠️  No packages found to check." >&2
+  popd > /dev/null
+  exit 0
+fi
+
+# --- Step 2: Check existence via HEAD requests ---
+echo "📡 Checking existence on server (HEAD requests)..." >&2
+
+while read -r pkg ver abi; do
+  url="${OBS_BASE_URL}/${pkg}/${ver}/${abi}"
+  printf 'url = "%s"\n' "$url"
+  printf 'output = /dev/null\n'
+  printf 'write-out = "%%{http_code} %%{url_effective}\\n"\n'
+done < candidates.txt > curl_head_config.txt
+
+curl -s -I -Z -K curl_head_config.txt > existence_results.txt
+
+# --- Step 3: Generate download config ---
+echo "📝 Generating download list..." >&2
+
+awk '
+$1 == "200" {
+  url = $2
+  n = split(url, parts, "/")
+  abi = parts[n]
+
+  print "url = \"" url "\""
+  print "output = \"downloads/" abi "\""
+}' existence_results.txt > curl_download_config.txt
+
+download_count=$(grep -c "^url =" curl_download_config.txt || true)
+echo "📊 $download_count packages exist on remote server." >&2
+
+# --- Step 4: Download ---
+mkdir -p downloads
 echo "⬇️  Downloading artifacts..." >&2
-if [ -s curl_config.txt ]; then
-  curl -f -s -Z -K curl_config.txt
+if [ -s curl_download_config.txt ]; then
+  curl -f -s -Z -K curl_download_config.txt
 else
   echo "⚠️  No artifacts to download." >&2
 fi
 
+# --- Step 5: Verify ---
 echo "🔐 Verifying attestations..." >&2
 verified_count=0
 failed_count=0
@@ -129,8 +126,11 @@ fi
 
 popd > /dev/null
 
+# Calculate Skipped
+skipped_count=$((candidate_count - download_count))
+
 echo "----------------------------------------" >&2
-echo "🎉 Result: Success: $verified_count, Failed: $failed_count" >&2
+echo "🎉 Result: Success: $verified_count, Failed: $failed_count, Skipped: $skipped_count" >&2
 echo "📝 Debug files are preserved in: ./$WORK_DIR" >&2
 
 if [[ $failed_count -gt 0 ]]; then
