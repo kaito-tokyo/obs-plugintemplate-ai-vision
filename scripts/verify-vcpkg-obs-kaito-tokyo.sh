@@ -2,31 +2,13 @@
 
 set -euo pipefail
 
-detect_cache_dir() {
-  if [[ -n "${VCPKG_DEFAULT_BINARY_CACHE:-}" ]]; then
-    echo "$VCPKG_DEFAULT_BINARY_CACHE"
-    return
-  fi
-
-  case "$OSTYPE" in
-    msys*|cygwin*)
-      echo "$(cygpath -u "$LOCALAPPDATA")/vcpkg/archives"
-      ;;
-    darwin*)
-      echo "$HOME/.cache/vcpkg/archives"
-      ;;
-    *)
-      echo "$HOME/.cache/vcpkg/archives"
-      ;;
-  esac
-}
-
 if [[ $# -lt 1 ]]; then
   echo "No status files provided. Usage: $0 <status_file1> [<status_file2> ...]" >&2
   exit 1
 fi
 
-VCPKG_CACHE_DIR=$(detect_cache_dir)
+VCPKG_CACHE_DIR=${1:?}
+shift
 if [[ ! -d "$VCPKG_CACHE_DIR" ]]; then
   echo "Error: Vcpkg cache directory does not exist: $VCPKG_CACHE_DIR" >&2
   exit 1
