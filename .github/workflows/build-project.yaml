@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies from vcpkg
         run: |
           ./scripts/install-vcpkg-macos.sh
-          find $HOME/.cache
+          ls $HOME/.cache
 
       - name: Restore libobs cache
         uses: actions/cache/restore@v5
