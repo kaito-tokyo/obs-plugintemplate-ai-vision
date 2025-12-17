@@ -82,7 +82,14 @@ endif()
 set(PLUGIN_SOURCES src/plugin-main.cpp)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE ${PLUGIN_SOURCES})
-target_link_libraries(${CMAKE_PROJECT_NAME} OBS::libobs OBS::obs-frontend-api Qt6::Widgets Qt6::Core ncnn::ncnn)
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME}
+  OBS::libobs
+  OBS::obs-frontend-api
+  Qt6::Widgets
+  Qt6::Core
+  ncnn::ncnn
+)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "PLUGIN_VERSION=\"${PLUGIN_VERSION}\"")
 
 if(MSVC)
